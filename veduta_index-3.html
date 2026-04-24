@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veduta</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0f1e36;
+    --navy-mid: #1a2e4a;
+    --navy-light: #243d5e;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #f8f4ed;
+    --cream-dark: #ede8df;
+    --white: #ffffff;
+    --text: #1a1a2e;
+    --text-mid: #4a5568;
+    --text-light: #8a9bb0;
+    --success: #2d7a5f;
+    --warning: #b8722a;
+    --danger: #8b2635;
+    --border: #e2ddd6;
+    --shadow: 0 4px 24px rgba(15,30,54,0.08);
+    --shadow-lg: 0 12px 48px rgba(15,30,54,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* AUTH SCREEN */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--navy);
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.04) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.02) 0%, transparent 50%);
+  }
+
+  .auth-card {
+    background: var(--white);
+    border-radius: 2px;
+    padding: 60px 50px;
+    width: 420px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .auth-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+
+  .auth-tagline {
+    font-size: 13px;
+    color: var(--text-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    font-weight: 500;
+  }
+
+  .auth-gold-line {
+    width: 40px;
+    height: 2px;
+    background: var(--navy);
+    margin-bottom: 40px;
+  }
+
+  .auth-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .auth-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+
+  .auth-input:focus { border-color: var(--navy); background: var(--white); }
+
+  .auth-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+  }
+
+  .auth-btn:hover { background: var(--navy-light); }
+
+  .auth-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--danger);
+    padding: 12px 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  /* APP LAYOUT */
+  #app { display: none; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--navy);
+    background-image: radial-gradient(ellipse at 0% 100%, rgba(255,255,255,0.03) 0%, transparent 60%);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-header {
+    padding: 32px 28px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-logo span { color: var(--white); }
+
+  .sidebar-subtitle {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .sidebar-nav { padding: 20px 0; flex: 1; overflow-y: auto; }
+
+  .nav-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    padding: 12px 28px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 28px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    font-weight: 400;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+
+  .nav-item.active {
+    color: var(--white);
+    background: rgba(255,255,255,0.08);
+    border-left-color: var(--white);
+    font-weight: 500;
+  }
+
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .sidebar-footer {
+    padding: 20px 28px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-user {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-user strong { color: rgba(255,255,255,0.7); display: block; font-size: 13px; }
+
+  .signout-btn {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+    transition: color 0.2s;
+  }
+
+  .signout-btn:hover { color: rgba(255,255,255,0.6); }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+    padding: 40px 48px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--white);
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--cream-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .card-body { padding: 20px 24px; }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary { background: var(--navy); color: var(--white); }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-gold { background: var(--gold); color: var(--navy); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+  .btn-outline:hover { background: var(--navy); color: var(--white); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+  .btn-danger { background: var(--danger); color: var(--white); }
+
+  /* FORM ELEMENTS */
+  .form-group { margin-bottom: 18px; }
+
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    margin-bottom: 7px;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--navy);
+    background: var(--white);
+  }
+
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* STATUS BADGES */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-todo { background: #f1f5f9; color: #64748b; }
+  .badge-progress { background: #fef3c7; color: #92400e; }
+  .badge-done { background: #dcfce7; color: #166534; }
+  .badge-gold { background: rgba(255,255,255,0.12); color: var(--white); }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.15s;
+  }
+
+  .checklist-item:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    margin-top: 1px;
+  }
+
+  .check-box:hover { border-color: var(--navy); }
+  .check-box.checked { background: var(--navy); border-color: var(--navy); color: white; }
+  .check-box.in-progress { background: var(--navy-light); border-color: var(--navy-light); color: var(--white); }
+
+  .check-text { flex: 1; font-size: 14px; line-height: 1.5; }
+  .check-text.done { text-decoration: line-through; color: var(--text-light); }
+
+  .check-meta {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* TRACK ACCORDION */
+  .track {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .track-header {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .track-header:hover { background: var(--cream); }
+
+  .track-header-left { display: flex; align-items: center; gap: 14px; }
+
+  .track-number {
+    width: 32px;
+    height: 32px;
+    background: var(--navy);
+    color: var(--white);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .track-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .track-progress-wrap { display: flex; align-items: center; gap: 12px; }
+
+  .track-progress-bar {
+    width: 120px;
+    height: 4px;
+    background: var(--cream-dark);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .track-progress-fill {
+    height: 100%;
+    background: var(--navy-light);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .track-progress-text {
+    font-size: 12px;
+    color: var(--text-light);
+    font-family: 'DM Mono', monospace;
+    min-width: 35px;
+    text-align: right;
+  }
+
+  .track-chevron {
+    font-size: 12px;
+    color: var(--text-light);
+    transition: transform 0.2s;
+    margin-left: 12px;
+  }
+
+  .track.open .track-chevron { transform: rotate(180deg); }
+
+  .track-body { display: none; padding: 0 24px 16px; border-top: 1px solid var(--cream-dark); }
+  .track.open .track-body { display: block; }
+
+  /* REMINDER BANNER */
+  .reminder-banner {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--white);
+    padding: 16px 24px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .reminder-text { font-size: 13px; opacity: 0.9; }
+  .reminder-text strong { color: var(--white); font-weight: 700; }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; }
+
+  .data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    border-bottom: 1px solid var(--border);
+    background: var(--cream);
+  }
+
+  .data-table td {
+    padding: 14px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--cream-dark);
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--cream); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,30,54,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 2px;
+    width: 560px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .modal-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 4px;
+    transition: color 0.15s;
+  }
+
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer { padding: 16px 28px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 6px;
+  }
+
+  /* PIPELINE STAGE */
+  .pipeline-stages { display: flex; gap: 0; margin-bottom: 24px; }
+
+  .stage-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid var(--border);
+    color: var(--text-light);
+    transition: all 0.15s;
+  }
+
+  .stage-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* CONTACT CARD */
+  .contact-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: box-shadow 0.2s;
+  }
+
+  .contact-card:hover { box-shadow: var(--shadow-lg); }
+
+  .contact-avatar {
+    width: 44px;
+    height: 44px;
+    background: var(--navy);
+    color: var(--white);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .contact-info { flex: 1; }
+  .contact-name { font-weight: 600; font-size: 15px; color: var(--navy); }
+  .contact-role { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .contact-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+  .tag {
+    padding: 2px 8px;
+    background: var(--cream-dark);
+    border-radius: 2px;
+    font-size: 11px;
+    color: var(--text-mid);
+    font-weight: 500;
+  }
+
+  /* MEETING LOG */
+  .meeting-entry {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+
+  .meeting-entry:last-child { border-bottom: none; }
+
+  .meeting-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+
+  .meeting-title { font-weight: 600; font-size: 14px; color: var(--navy); margin-bottom: 6px; }
+
+  .meeting-notes { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
+
+  /* WEEK REMINDER */
+  .week-reminder {
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--navy);
+    color: var(--white);
+    padding: 14px 20px;
+    border-radius: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid var(--navy-light);
+    max-width: 320px;
+  }
+
+  .toast.show { display: flex; animation: slideIn 0.3s ease; }
+
+  @keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+  }
+
+  .empty-state-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state-text { font-size: 14px; margin-bottom: 20px; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .sidebar { width: 220px; }
+    .main { margin-left: 220px; padding: 24px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .loading { opacity: 0.5; pointer-events: none; }
+
+  /* AC MEETING */
+  .ac-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+
+  .ac-item:last-child { border-bottom: none; }
+  .ac-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ready { background: var(--success); }
+  .dot-pending { background: var(--navy-light); }
+  .dot-needed { background: #e2e8f0; border: 1.5px solid var(--border); }
+
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Veduta</div>
+    <div class="auth-tagline">CAE Executive Workspace</div>
+    <div class="auth-gold-line"></div>
+    <label class="auth-label">Email</label>
+    <input type="email" class="auth-input" id="auth-email" placeholder="your@email.com">
+    <label class="auth-label">Password</label>
+    <input type="password" class="auth-input" id="auth-password" placeholder="••••••••">
+    <button class="auth-btn" onclick="handleAuth()">Sign In</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">Ved<span>uta</span></div>
+      <div class="sidebar-subtitle">CAE Workspace</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+      <div class="nav-section-label">Onboarding</div>
+      <div class="nav-item" onclick="showPage('onboarding')">
+        <span class="nav-icon">◎</span> Onboarding Tracker
+      </div>
+      <div class="nav-section-label">People</div>
+      <div class="nav-item" onclick="showPage('contacts')">
+        <span class="nav-icon">◉</span> Key Contacts
+      </div>
+      <div class="nav-item" onclick="showPage('meetings')">
+        <span class="nav-icon">◷</span> 1:1 Meetings
+      </div>
+      <div class="nav-item" onclick="showPage('recruiting')">
+        <span class="nav-icon">◈</span> Recruiting Pipeline
+      </div>
+      <div class="nav-section-label">Governance</div>
+      <div class="nav-item" onclick="showPage('auditplan')">
+        <span class="nav-icon">◫</span> Audit Plan
+      </div>
+      <div class="nav-item" onclick="showPage('acprep')">
+        <span class="nav-icon">◬</span> AC Meeting Prep
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <strong id="sidebar-user-name">Loading...</strong>
+        Chief Audit Executive
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="greeting-text">Good morning.</div>
+          <div class="page-subtitle" id="dashboard-date">Loading...</div>
+        </div>
+      </div>
+
+      <div id="weekly-reminders"></div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Onboarding</div>
+          <div class="stat-value" id="stat-onboarding">—</div>
+          <div class="stat-sub">items complete</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Key Contacts</div>
+          <div class="stat-value" id="stat-contacts">—</div>
+          <div class="stat-sub">in network</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Recruiting</div>
+          <div class="stat-value" id="stat-recruiting">—</div>
+          <div class="stat-sub">candidates tracked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">AC Meetings</div>
+          <div class="stat-value" id="stat-ac">—</div>
+          <div class="stat-sub">prep items open</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Onboarding Progress</div>
+            <span class="badge badge-gold" id="onboarding-pct">0%</span>
+          </div>
+          <div class="card-body" id="dashboard-tracks"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Upcoming 1:1s</div>
+            <button class="btn btn-sm btn-outline" onclick="showPage('meetings')">View All</button>
+          </div>
+          <div class="card-body" id="dashboard-meetings">
+            <div class="empty-state">
+              <div class="empty-state-icon">◷</div>
+              <div class="empty-state-text">No upcoming meetings logged</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING TRACKER -->
+    <div class="page" id="page-onboarding">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Onboarding Tracker</div>
+          <div class="page-subtitle">Six tracks · Global Coffee Co. CAE Integration</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span class="badge badge-gold" id="onboarding-overall-pct">0%</span>
+          <button class="btn btn-primary" onclick="openAddItemModal()">+ Add Item</button>
+        </div>
+      </div>
+
+      <div class="week-reminder">
+        <span>📋</span>
+        <span>Weekly reminder: Check <strong>Engage</strong>, <strong>Workvivo</strong>, and <strong>Teams channels</strong> for company updates.</span>
+      </div>
+
+      <div id="tracks-container"></div>
+    </div>
+
+    <!-- KEY CONTACTS -->
+    <div class="page" id="page-contacts">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Key Contacts</div>
+          <div class="page-subtitle">Executives, external stakeholders, and governance partners</div>
+        </div>
+        <button class="btn btn-primary" onclick="openContactModal()">+ Add Contact</button>
+      </div>
+
+      <div class="week-reminder">
+        <span>💡</span>
+        <span>Weekly reminder: Send a <strong>thought leadership article</strong> or relevant insight to a contact this week.</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div>
+          <input type="text" class="form-input" placeholder="Search contacts..." id="contact-search" oninput="filterContacts()">
+        </div>
+        <div>
+          <select class="form-select" id="contact-filter" onchange="filterContacts()">
+            <option value="">All Types</option>
+            <option value="Internal">Internal</option>
+            <option value="External Audit">External Audit</option>
+            <option value="Legal">Legal</option>
+            <option value="Finance">Finance</option>
+            <option value="Board">Board</option>
+            <option value="HR">HR</option>
+            <option value="Technology">Technology</option>
+            <option value="Co-source">Co-source</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="contacts-list"></div>
+    </div>
+
+    <!-- 1:1 MEETINGS -->
+    <div class="page" id="page-meetings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">1:1 Meetings</div>
+          <div class="page-subtitle">Meeting log, action items, and follow-ups</div>
+        </div>
+        <button class="btn btn-primary" onclick="openMeetingModal()">+ Log Meeting</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;">
+        <div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">People</div></div>
+            <div class="card-body" id="meeting-people-list" style="padding:12px 16px;"></div>
+          </div>
+          <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="openAddPersonModal()">+ Add Person</button>
+        </div>
+        <div id="meeting-detail-panel">
+          <div class="empty-state" style="padding:80px 20px;">
+            <div class="empty-state-icon">◷</div>
+            <div class="empty-state-text">Select a person to view meeting history</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECRUITING PIPELINE -->
+    <div class="page" id="page-recruiting">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Recruiting Pipeline</div>
+          <div class="page-subtitle">Candidates, LinkedIn sources, and team build tracking</div>
+        </div>
+        <button class="btn btn-primary" onclick="openCandidateModal()">+ Add Candidate</button>
+      </div>
+
+      <div class="pipeline-stages" id="pipeline-stages">
+        <div class="stage-tab active" onclick="filterPipeline('all')">All</div>
+        <div class="stage-tab" onclick="filterPipeline('Sourced')">Sourced</div>
+        <div class="stage-tab" onclick="filterPipeline('In Contact')">In Contact</div>
+        <div class="stage-tab" onclick="filterPipeline('Interviewing')">Interviewing</div>
+        <div class="stage-tab" onclick="filterPipeline('Offer')">Offer</div>
+        <div class="stage-tab" onclick="filterPipeline('Hired')">Hired</div>
+        <div class="stage-tab" onclick="filterPipeline('Not Proceeding')">Not Proceeding</div>
+      </div>
+
+      <div id="candidates-list"></div>
+    </div>
+
+    <!-- AUDIT PLAN -->
+    <div class="page" id="page-auditplan">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Audit Plan</div>
+          <div class="page-subtitle">High-level coverage tracker · Detailed tracking in GRC system</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAuditItemModal()">+ Add Item</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;" id="audit-stats"></div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Audit Coverage</div></div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Area / Domain</th>
+                <th>Type</th>
+                <th>Owner</th>
+                <th>Target Date</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AC MEETING PREP -->
+    <div class="page" id="page-acprep">
+      <div class="page-header">
+        <div>
+          <div class="page-title">AC Meeting Prep</div>
+          <div class="page-subtitle">Audit Committee meeting preparation and follow-up</div>
+        </div>
+        <button class="btn btn-primary" onclick="openACMeetingModal()">+ New Meeting</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;">
+        <div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Meetings</div></div>
+            <div class="card-body" id="ac-meetings-list" style="padding:12px 16px;"></div>
+          </div>
+        </div>
+        <div id="ac-meeting-detail">
+          <div class="empty-state" style="padding:80px 20px;">
+            <div class="empty-state-icon">◬</div>
+            <div class="empty-state-text">Select a meeting to view prep details</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-msg"></span>
+  <button id="toast-undo" onclick="undoDelete()" style="display:none;margin-left:12px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 12px;border-radius:2px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.5px;">UNDO</button>
+</div>
+
+<!-- MODALS -->
+<!-- Add Onboarding Item -->
+<div class="modal-overlay" id="modal-add-item">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Onboarding Item</div>
+      <button class="modal-close" onclick="closeModal('modal-add-item')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Track</label>
+        <select class="form-select" id="item-track">
+          <option value="1">Track 1: KDP IA & SOX</option>
+          <option value="2">Track 2: People & Culture</option>
+          <option value="3">Track 3: JDE Peet's Orientation</option>
+          <option value="4">Track 4: Business & Industry</option>
+          <option value="5">Track 5: Technology</option>
+          <option value="6">Track 6: Governance & Relationships</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Item</label>
+        <input type="text" class="form-input" id="item-text" placeholder="e.g. Review IA Charter">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Owner / Contact</label>
+          <input type="text" class="form-input" id="item-owner" placeholder="e.g. Doug Sinclair">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Date</label>
+          <input type="date" class="form-input" id="item-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="item-notes" placeholder="Additional context..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-item')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveOnboardingItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal-overlay" id="modal-contact">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="contact-modal-title">Add Contact</div>
+      <button class="modal-close" onclick="closeModal('modal-contact')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="contact-id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="contact-name" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title / Role</label>
+          <input type="text" class="form-input" id="contact-role" placeholder="e.g. CFO, JDE Peet's">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="contact-type">
+            <option>Internal</option>
+            <option>External Audit</option>
+            <option>Legal</option>
+            <option>Finance</option>
+            <option>Board</option>
+            <option>HR</option>
+            <option>Technology</option>
+            <option>Co-source</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company</label>
+          <input type="text" class="form-input" id="contact-company" placeholder="e.g. Global Coffee Co.">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="contact-email" placeholder="email@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone / WhatsApp</label>
+          <input type="text" class="form-input" id="contact-phone" placeholder="+1 xxx xxx xxxx">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Last Touchpoint</label>
+          <input type="date" class="form-input" id="contact-last">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Next Planned</label>
+          <select class="form-select" id="contact-next-type">
+            <option value="">— Select —</option>
+            <option>Coffee</option>
+            <option>Lunch</option>
+            <option>Drinks</option>
+            <option>Dinner</option>
+            <option>Call</option>
+            <option>Meeting</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="contact-notes" placeholder="Key context, relationship notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-contact')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- Meeting Modal -->
+<div class="modal-overlay" id="modal-meeting">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log 1:1 Meeting</div>
+      <button class="modal-close" onclick="closeModal('modal-meeting')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Person</label>
+          <input type="text" class="form-input" id="meeting-person" placeholder="Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="meeting-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Meeting Title / Purpose</label>
+        <input type="text" class="form-input" id="meeting-title" placeholder="e.g. SOX Transition Briefing">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Agenda / Notes</label>
+        <textarea class="form-textarea" id="meeting-notes" placeholder="Key discussion points..." style="min-height:100px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Action Items</label>
+        <textarea class="form-textarea" id="meeting-actions" placeholder="Follow-up items..."></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Next Meeting</label>
+          <input type="date" class="form-input" id="meeting-next">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cadence</label>
+          <select class="form-select" id="meeting-cadence">
+            <option value="">— Select —</option>
+            <option>Weekly</option>
+            <option>Bi-weekly</option>
+            <option>Monthly</option>
+            <option>Quarterly</option>
+            <option>Ad hoc</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-meeting')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMeeting()">Save Meeting</button>
+    </div>
+  </div>
+</div>
+
+<!-- Candidate Modal -->
+<div class="modal-overlay" id="modal-candidate">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Candidate</div>
+      <button class="modal-close" onclick="closeModal('modal-candidate')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="cand-name" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Role</label>
+          <input type="text" class="form-input" id="cand-role" placeholder="e.g. Senior Auditor">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <select class="form-select" id="cand-source">
+            <option>LinkedIn</option>
+            <option>Referral</option>
+            <option>Former Colleague</option>
+            <option>Recruiter</option>
+            <option>Inbound</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select class="form-select" id="cand-stage">
+            <option>Sourced</option>
+            <option>In Contact</option>
+            <option>Interviewing</option>
+            <option>Offer</option>
+            <option>Hired</option>
+            <option>Not Proceeding</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Last Contact</label>
+          <input type="date" class="form-input" id="cand-last">
+        </div>
+        <div class="form-group">
+          <label class="form-label">LinkedIn URL</label>
+          <input type="text" class="form-input" id="cand-linkedin" placeholder="linkedin.com/in/...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="cand-notes" placeholder="Background, impressions, next steps..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-candidate')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCandidate()">Save Candidate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Item Modal -->
+<div class="modal-overlay" id="modal-audit">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Audit Plan Item</div>
+      <button class="modal-close" onclick="closeModal('modal-audit')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Area / Domain</label>
+          <input type="text" class="form-input" id="audit-area" placeholder="e.g. Revenue Recognition">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="audit-type">
+            <option>SOX</option>
+            <option>Operational</option>
+            <option>IT / Cyber</option>
+            <option>Compliance</option>
+            <option>Financial</option>
+            <option>ERM</option>
+            <option>Advisory</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input type="text" class="form-input" id="audit-owner" placeholder="e.g. Heather / PwC">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Date</label>
+          <input type="date" class="form-input" id="audit-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="audit-status">
+          <option>Planned</option>
+          <option>In Progress</option>
+          <option>Fieldwork Complete</option>
+          <option>Report Issued</option>
+          <option>Complete</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="audit-notes" placeholder="Scope, key risks, observations..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-audit')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAuditItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- AC Meeting Modal -->
+<div class="modal-overlay" id="modal-ac-meeting">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New AC Meeting</div>
+      <button class="modal-close" onclick="closeModal('modal-ac-meeting')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Meeting Date</label>
+          <input type="date" class="form-input" id="ac-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quarter</label>
+          <select class="form-select" id="ac-quarter">
+            <option>Q1 2026</option>
+            <option>Q2 2026</option>
+            <option>Q3 2026</option>
+            <option>Q4 2026</option>
+            <option>Q1 2027</option>
+            <option>Q2 2027</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Meeting Title / Purpose</label>
+        <input type="text" class="form-input" id="ac-title" placeholder="e.g. Q1 2026 AC Meeting">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Agenda Items</label>
+        <textarea class="form-textarea" id="ac-agenda" placeholder="Key topics to cover..." style="min-height:100px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Materials Status</label>
+        <textarea class="form-textarea" id="ac-materials" placeholder="Deck status, open items..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Open Items / Follow-ups</label>
+        <textarea class="form-textarea" id="ac-open" placeholder="Items carried forward..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-ac-meeting')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveACMeeting()">Save Meeting</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Person Modal -->
+<div class="modal-overlay" id="modal-add-person">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Add Person</div>
+      <button class="modal-close" onclick="closeModal('modal-add-person')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" id="person-name" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role / Title</label>
+        <input type="text" class="form-input" id="person-role" placeholder="e.g. CFO, JDE Peet's">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cadence</label>
+        <select class="form-select" id="person-cadence">
+          <option value="">— Select —</option>
+          <option>Weekly</option>
+          <option>Bi-weekly</option>
+          <option>Monthly</option>
+          <option>Quarterly</option>
+          <option>Ad hoc</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-person')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePerson()">Add Person</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://xkxjcztvpjimxexzofjn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreGpjenR2cGppbXhleHpvZmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5ODAzMDksImV4cCI6MjA5MjU1NjMwOX0.-lXV8vrVCVyRaUgnzL7S424TUvKvO8hr1ywx2lbmjDA';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let currentMeetingPerson = null;
+let currentACMeeting = null;
+let pipelineFilter = 'all';
+
+// TRACK DEFINITIONS
+const TRACKS = [
+  { id: 1, name: 'KDP IA & SOX', items: [
+    'Review IA Charter', 'Review AC Charter (adopted Dec 9, 2024)',
+    'SOX scoping and risk assessment', 'Planning and methodology review',
+    'Prior Audit Committee presentations', 'Prior audit plans and audit reports',
+    'Risk and Controls Matrix', 'Process narratives and flowcharts',
+    'ERM program documentation', 'PwC co-source engagement review',
+    'Review control deficiencies', 'Walkthrough and test of design status',
+    'Workiva orientation and access', 'Overview of any other tools in use',
+    'Review IA methodology and IIA standards alignment',
+    'Review quality assurance and performance assessment of the IA function',
+    'Assess data analytics capability and how it is currently used in audits',
+    'Review fraud risk assessment program and investigation protocols',
+    'Review right-to-audit clauses in key third-party contracts'
+  ]},
+  { id: 2, name: 'People & Culture', items: [
+    'Meet Amsterdam JDE Peet\'s IA team member 1',
+    'Meet Amsterdam JDE Peet\'s IA team member 2',
+    'Meet Amsterdam JDE Peet\'s IA team member 3',
+    'Meet broader KDP IA team (moving to BevCo)',
+    'Understand informal dynamics and key relationships',
+    'Conduct internal competency assessment of the inherited team — skills, gaps, development needs',
+    'Assess whether guest auditor / rotation program exists or could be established'
+  ]},
+  { id: 3, name: "JDE Peet's Orientation", items: [
+    'Internal controls and internal audit program review',
+    'ERM program review', 'GRC tool orientation (Netherlands)',
+    'SAP BPC close process understanding',
+    'Legal entity structure across markets',
+    'TMO overview — integration and spin plans',
+    'Meet Yang Xu (CFO, Burlington week of Apr 13)',
+    "JDE Peet's Finance leadership introductions",
+    "JDE Peet's IT/Cybersecurity leadership",
+    'Assess second line of defense functions (Risk Management, Compliance, Legal, Quality Control) and how IA coordinates with them',
+    'Review third-party/vendor risk management program',
+    'Understand global regulatory compliance inventory across JDE Peet\'s markets',
+    'Review fraud prevention program and anti-bribery/anti-corruption controls (FCPA maturity vs. KDP)'
+  ]},
+  { id: 4, name: 'Business & Industry', items: [
+    'Coffee business model: Systems, Pods, Bagged, Instant, Specialty',
+    'Key brands deep dive (Keurig, Green Mountain, Intelligentsia, Peet\'s)',
+    'Sourcing and supply chain overview',
+    'Financial model and key KPIs',
+    'Go-to-market strategy overview',
+    'Strategic priorities for 2026 and 2027',
+    'Meet commercial leaders', 'Meet FP&A team'
+  ]},
+  { id: 5, name: 'Technology', items: [
+    'SAP environment and S/4HANA implementation timeline',
+    "JDE Peet's GRC tool review",
+    'SAP BPC overview', 'Cybersecurity posture — KDP',
+    "Cybersecurity posture — JDE Peet's",
+    'Meet CIO', 'Meet CTO', 'Meet CISO',
+    'Review IT governance structure and strategic alignment between business and IT',
+    'Assess existing cyber incident reporting process',
+    'Review data management framework (security, storage, usage)'
+  ]},
+  { id: 6, name: 'Governance & Relationships', items: [
+    'Follow-up meeting with Mike Van de Ven (AC Chair)',
+    'Meet Angela Stephens (Controller)',
+    'Deloitte engagement team introduction',
+    'PwC co-source team introduction',
+    'Introduction to incoming BevCo CAE',
+    'Meet Anthony DiSilvestro (CFO)',
+    'Global Coffee Co. leadership meetings (as announced)',
+    'Establish IA vision and multi-year strategic plan for the function'
+  ]}
+];
+
+// AUTH
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    // Try sign up
+    const { data: su, error: suErr } = await sb.auth.signUp({ email, password });
+    if (suErr) {
+      errEl.style.display = 'block';
+      errEl.textContent = error.message;
+      return;
+    }
+    if (su.user) initApp(su.user);
+  } else {
+    initApp(data.user);
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+document.getElementById('auth-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleAuth();
+});
+
+// INIT
+async function initApp(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  const name = user.email.split('@')[0];
+  document.getElementById('sidebar-user-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Good morning.' : hour < 17 ? 'Good afternoon.' : 'Good evening.';
+  document.getElementById('greeting-text').textContent = greeting;
+  document.getElementById('dashboard-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  await ensureSchema();
+  await seedOnboardingItems();
+  await loadDashboard();
+  await loadOnboarding();
+  await loadContacts();
+  await loadMeetingPeople();
+  await loadCandidates();
+  await loadAuditPlan();
+  await loadACMeetings();
+
+  showWeeklyReminders();
+}
+
+// DB SCHEMA
+async function ensureSchema() {
+  // Tables are created via Supabase dashboard SQL editor
+  // We'll handle gracefully if they don't exist
+}
+
+async function dbQuery(table, query = {}) {
+  try {
+    let q = sb.from(table).select('*').eq('user_id', currentUser.id);
+    if (query.order) q = q.order(query.order, { ascending: query.asc !== false });
+    const { data, error } = await q;
+    if (error) return [];
+    return data || [];
+  } catch { return []; }
+}
+
+async function dbInsert(table, data) {
+  try {
+    const { data: d, error } = await sb.from(table).insert({ ...data, user_id: currentUser.id }).select().single();
+    if (error) { console.error(error); showToast('Error saving. Run setup SQL first.'); return null; }
+    return d;
+  } catch (e) { showToast('Database not set up yet. See setup instructions.'); return null; }
+}
+
+async function dbUpdate(table, id, data) {
+  try {
+    const { error } = await sb.from(table).update(data).eq('id', id).eq('user_id', currentUser.id);
+    if (error) console.error(error);
+  } catch {}
+}
+
+async function dbDelete(table, id) {
+  try {
+    await sb.from(table).delete().eq('id', id).eq('user_id', currentUser.id);
+  } catch {}
+}
+
+// SEED ONBOARDING ITEMS
+async function seedOnboardingItems() {
+  try {
+    const existing = await dbQuery('onboarding_items');
+    const existingTexts = new Set(existing.map(i => i.item_text));
+
+    for (const track of TRACKS) {
+      for (const item of track.items) {
+        if (!existingTexts.has(item)) {
+          await dbInsert('onboarding_items', {
+            track_id: track.id,
+            track_name: track.name,
+            item_text: item,
+            status: 'todo',
+            owner: '',
+            notes: '',
+            target_date: null
+          });
+        }
+      }
+    }
+  } catch {}
+}
+
+// NAVIGATION
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget && event.currentTarget.classList.add('active');
+
+  // Refresh data
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'onboarding') loadOnboarding();
+  if (page === 'contacts') loadContacts();
+  if (page === 'recruiting') loadCandidates();
+  if (page === 'auditplan') loadAuditPlan();
+  if (page === 'acprep') loadACMeetings();
+}
+
+// WEEKLY REMINDERS
+function showWeeklyReminders() {
+  const reminders = [
+    '📋 Check <strong>Engage</strong> site for company updates',
+    '💬 Check <strong>Workvivo</strong> for team communications',
+    '🔔 Review <strong>Teams channels</strong> for announcements',
+    '📨 Send a <strong>thought leadership article</strong> to a key contact this week'
+  ];
+  const el = document.getElementById('weekly-reminders');
+  el.innerHTML = `<div class="reminder-banner">
+    <div>
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:0.5;margin-bottom:6px;font-weight:600;">Weekly Reminders</div>
+      <div class="reminder-text">${reminders.map(r => `• ${r}`).join(' &nbsp;·&nbsp; ')}</div>
+    </div>
+  </div>`;
+}
+
+// DASHBOARD
+async function loadDashboard() {
+  try {
+    const items = await dbQuery('onboarding_items');
+    const done = items.filter(i => i.status === 'done').length;
+    document.getElementById('stat-onboarding').textContent = `${done}/${items.length}`;
+
+    const pct = items.length ? Math.round(done / items.length * 100) : 0;
+    document.getElementById('onboarding-pct').textContent = pct + '%';
+
+    // Track progress
+    const trackEl = document.getElementById('dashboard-tracks');
+    trackEl.innerHTML = TRACKS.map(t => {
+      const trackItems = items.filter(i => i.track_id === t.id);
+      const trackDone = trackItems.filter(i => i.status === 'done').length;
+      const p = trackItems.length ? Math.round(trackDone / trackItems.length * 100) : 0;
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:12px;color:var(--text-mid);font-weight:500;">T${t.id}: ${t.name}</span>
+          <span style="font-size:11px;color:var(--text-light);font-family:'DM Mono',monospace;">${trackDone}/${trackItems.length}</span>
+        </div>
+        <div class="track-progress-bar" style="width:100%;">
+          <div class="track-progress-fill" style="width:${p}%;"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const contacts = await dbQuery('contacts');
+    document.getElementById('stat-contacts').textContent = contacts.length;
+
+    const candidates = await dbQuery('candidates');
+    document.getElementById('stat-recruiting').textContent = candidates.length;
+
+    const acItems = await dbQuery('ac_meetings');
+    const openAC = acItems.filter(i => i.open_items && i.open_items.trim()).length;
+    document.getElementById('stat-ac').textContent = openAC;
+
+    // Upcoming meetings
+    const meetings = await dbQuery('meetings', { order: 'next_meeting', asc: true });
+    const upcoming = meetings.filter(m => m.next_meeting && new Date(m.next_meeting) >= new Date()).slice(0, 4);
+    const meetEl = document.getElementById('dashboard-meetings');
+    if (upcoming.length === 0) {
+      meetEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◷</div><div class="empty-state-text">No upcoming meetings logged</div></div>`;
+    } else {
+      meetEl.innerHTML = upcoming.map(m => `
+        <div class="meeting-entry">
+          <div class="meeting-date">${new Date(m.next_meeting).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})}</div>
+          <div class="meeting-title">${m.person} — ${m.cadence || 'Meeting'}</div>
+        </div>`).join('');
+    }
+  } catch (e) { console.error(e); }
+}
+
+// ONBOARDING
+async function loadOnboarding() {
+  const items = await dbQuery('onboarding_items', { order: 'created_at' });
+  const total = items.length;
+  const done = items.filter(i => i.status === 'done').length;
+  document.getElementById('onboarding-overall-pct').textContent = total ? Math.round(done/total*100) + '%' : '0%';
+
+  const container = document.getElementById('tracks-container');
+  container.innerHTML = TRACKS.map(track => {
+    const trackItems = items.filter(i => i.track_id === track.id);
+    const trackDone = trackItems.filter(i => i.status === 'done').length;
+    const pct = trackItems.length ? Math.round(trackDone / trackItems.length * 100) : 0;
+    const isOpen = pct < 100;
+
+    return `<div class="track ${isOpen ? 'open' : ''}" id="track-${track.id}">
+      <div class="track-header" onclick="toggleTrack(${track.id})">
+        <div class="track-header-left">
+          <div class="track-number">T${track.id}</div>
+          <div>
+            <div class="track-name">${track.name}</div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${trackItems.length} items</div>
+          </div>
+        </div>
+        <div class="track-progress-wrap">
+          <div class="track-progress-bar">
+            <div class="track-progress-fill" style="width:${pct}%;"></div>
+          </div>
+          <span class="track-progress-text">${pct}%</span>
+          <span class="track-chevron">▼</span>
+        </div>
+      </div>
+      <div class="track-body">
+        ${trackItems.map(item => `
+          <div class="checklist-item" id="item-${item.id}">
+            <div class="check-box ${item.status === 'done' ? 'checked' : item.status === 'in-progress' ? 'in-progress' : ''}"
+              onclick="cycleItemStatus('${item.id}', '${item.status}')">
+              ${item.status === 'done' ? '✓' : item.status === 'in-progress' ? '→' : ''}
+            </div>
+            <div class="check-text ${item.status === 'done' ? 'done' : ''}">
+              ${item.item_text}
+              ${item.owner ? `<div class="check-meta">Owner: ${item.owner}</div>` : ''}
+              ${item.target_date ? `<div class="check-meta">Due: ${new Date(item.target_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>` : ''}
+              ${item.notes ? `<div class="check-meta" style="color:var(--text-mid);">${item.notes}</div>` : ''}
+            </div>
+            <button onclick="deleteOnboardingItem('${item.id}')" style="background:none;border:none;color:var(--border);cursor:pointer;font-size:16px;padding:0 4px;transition:color 0.15s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--border)'">×</button>
+          </div>`).join('')}
+        <div style="padding-top:12px;">
+          <button class="btn btn-sm btn-outline" onclick="openAddItemModalForTrack(${track.id})">+ Add item to Track ${track.id}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTrack(id) {
+  document.getElementById('track-' + id).classList.toggle('open');
+}
+
+async function cycleItemStatus(id, current) {
+  const next = current === 'todo' ? 'in-progress' : current === 'in-progress' ? 'done' : 'todo';
+  await dbUpdate('onboarding_items', id, { status: next });
+  await loadOnboarding();
+  await loadDashboard();
+  showToast(next === 'done' ? '✓ Item marked complete' : next === 'in-progress' ? '→ In progress' : '○ Reset to todo');
+}
+
+let pendingDelete = null;
+let pendingDeleteTimer = null;
+
+async function deleteOnboardingItem(id) {
+  // Fetch the item data before deleting so we can restore it
+  const items = await dbQuery('onboarding_items');
+  const item = items.find(i => i.id == id);
+  if (!item) return;
+
+  // Hide item from UI immediately
+  const el = document.getElementById('item-' + id);
+  if (el) el.style.display = 'none';
+
+  // Store pending delete
+  pendingDelete = item;
+
+  // Clear any existing timer
+  if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+
+  // Show toast with undo button
+  showToastWithUndo('Item removed');
+
+  // Actually delete after 5 seconds
+  pendingDeleteTimer = setTimeout(async () => {
+    if (pendingDelete && pendingDelete.id == id) {
+      await dbDelete('onboarding_items', id);
+      pendingDelete = null;
+      await loadOnboarding();
+      await loadDashboard();
+    }
+  }, 5000);
+}
+
+async function undoDelete() {
+  if (!pendingDelete) return;
+  clearTimeout(pendingDeleteTimer);
+  const item = pendingDelete;
+  pendingDelete = null;
+
+  // Re-insert the item
+  await dbInsert('onboarding_items', {
+    track_id: item.track_id,
+    track_name: item.track_name,
+    item_text: item.item_text,
+    status: item.status,
+    owner: item.owner || '',
+    notes: item.notes || '',
+    target_date: item.target_date || null
+  });
+
+  hideToast();
+  await loadOnboarding();
+  await loadDashboard();
+  showToast('✓ Item restored');
+}
+
+function openAddItemModal() { openModal('modal-add-item'); }
+function openAddItemModalForTrack(trackId) {
+  document.getElementById('item-track').value = trackId;
+  openModal('modal-add-item');
+}
+
+async function saveOnboardingItem() {
+  const item = {
+    track_id: parseInt(document.getElementById('item-track').value),
+    track_name: TRACKS[parseInt(document.getElementById('item-track').value) - 1].name,
+    item_text: document.getElementById('item-text').value,
+    owner: document.getElementById('item-owner').value,
+    target_date: document.getElementById('item-date').value || null,
+    notes: document.getElementById('item-notes').value,
+    status: 'todo'
+  };
+  if (!item.item_text) { showToast('Please enter an item description'); return; }
+  await dbInsert('onboarding_items', item);
+  closeModal('modal-add-item');
+  await loadOnboarding();
+  showToast('Item added');
+}
+
+// CONTACTS
+async function loadContacts() {
+  const contacts = await dbQuery('contacts', { order: 'name' });
+  renderContacts(contacts);
+}
+
+function renderContacts(contacts) {
+  const el = document.getElementById('contacts-list');
+  if (contacts.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◉</div><div class="empty-state-text">No contacts yet</div><button class="btn btn-primary" onclick="openContactModal()">Add First Contact</button></div>`;
+    return;
+  }
+  el.innerHTML = contacts.map(c => `
+    <div class="contact-card">
+      <div class="contact-avatar">${c.name.charAt(0)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-role">${c.role || ''}${c.company ? ` · ${c.company}` : ''}</div>
+        <div class="contact-tags">
+          ${c.type ? `<span class="tag">${c.type}</span>` : ''}
+          ${c.next_type ? `<span class="tag" style="background:rgba(15,30,54,0.08);color:var(--navy);">→ ${c.next_type}</span>` : ''}
+          ${c.last_touchpoint ? `<span class="tag">Last: ${new Date(c.last_touchpoint).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
+        </div>
+        ${c.notes ? `<div style="font-size:12px;color:var(--text-light);margin-top:6px;line-height:1.5;">${c.notes}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-sm btn-outline" onclick="editContact('${c.id}')">Edit</button>
+        <button class="btn btn-sm" style="background:var(--cream-dark);color:var(--text-mid);border:none;cursor:pointer;padding:7px 14px;font-size:12px;font-weight:600;border-radius:2px;" onclick="deleteContact('${c.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+async function filterContacts() {
+  const search = document.getElementById('contact-search').value.toLowerCase();
+  const type = document.getElementById('contact-filter').value;
+  const all = await dbQuery('contacts', { order: 'name' });
+  const filtered = all.filter(c =>
+    (c.name.toLowerCase().includes(search) || (c.role || '').toLowerCase().includes(search) || (c.company || '').toLowerCase().includes(search)) &&
+    (!type || c.type === type)
+  );
+  renderContacts(filtered);
+}
+
+function openContactModal(contact = null) {
+  document.getElementById('contact-modal-title').textContent = contact ? 'Edit Contact' : 'Add Contact';
+  document.getElementById('contact-id').value = contact?.id || '';
+  document.getElementById('contact-name').value = contact?.name || '';
+  document.getElementById('contact-role').value = contact?.role || '';
+  document.getElementById('contact-type').value = contact?.type || 'Internal';
+  document.getElementById('contact-company').value = contact?.company || '';
+  document.getElementById('contact-email').value = contact?.email || '';
+  document.getElementById('contact-phone').value = contact?.phone || '';
+  document.getElementById('contact-last').value = contact?.last_touchpoint || '';
+  document.getElementById('contact-next-type').value = contact?.next_type || '';
+  document.getElementById('contact-notes').value = contact?.notes || '';
+  openModal('modal-contact');
+}
+
+async function editContact(id) {
+  const contacts = await dbQuery('contacts');
+  const c = contacts.find(c => c.id == id);
+  if (c) openContactModal(c);
+}
+
+async function saveContact() {
+  const id = document.getElementById('contact-id').value;
+  const data = {
+    name: document.getElementById('contact-name').value,
+    role: document.getElementById('contact-role').value,
+    type: document.getElementById('contact-type').value,
+    company: document.getElementById('contact-company').value,
+    email: document.getElementById('contact-email').value,
+    phone: document.getElementById('contact-phone').value,
+    last_touchpoint: document.getElementById('contact-last').value || null,
+    next_type: document.getElementById('contact-next-type').value,
+    notes: document.getElementById('contact-notes').value
+  };
+  if (!data.name) { showToast('Please enter a name'); return; }
+  if (id) {
+    await dbUpdate('contacts', id, data);
+    showToast('Contact updated');
+  } else {
+    await dbInsert('contacts', data);
+    showToast('Contact added');
+  }
+  closeModal('modal-contact');
+  await loadContacts();
+  await loadDashboard();
+}
+
+async function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  await dbDelete('contacts', id);
+  await loadContacts();
+  await loadDashboard();
+  showToast('Contact deleted');
+}
+
+// MEETINGS
+async function loadMeetingPeople() {
+  const people = await dbQuery('meeting_people', { order: 'name' });
+  const el = document.getElementById('meeting-people-list');
+  if (people.length === 0) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--text-light);padding:8px 0;">No people yet</div>`;
+    return;
+  }
+  el.innerHTML = people.map(p => `
+    <div onclick="selectMeetingPerson('${p.id}')" style="padding:10px 8px;cursor:pointer;border-radius:2px;transition:background 0.15s;font-size:14px;color:var(--navy);font-weight:${currentMeetingPerson === p.id ? '600' : '400'};background:${currentMeetingPerson === p.id ? 'var(--cream)' : 'transparent'};" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='${currentMeetingPerson === p.id ? 'var(--cream)' : 'transparent'}'">
+      <div>${p.name}</div>
+      <div style="font-size:11px;color:var(--text-light);">${p.role || ''}${p.cadence ? ` · ${p.cadence}` : ''}</div>
+    </div>`).join('');
+}
+
+async function selectMeetingPerson(personId) {
+  currentMeetingPerson = personId;
+  await loadMeetingPeople();
+  const people = await dbQuery('meeting_people');
+  const person = people.find(p => p.id == personId);
+  const meetings = await dbQuery('meetings', { order: 'meeting_date', asc: false });
+  const personMeetings = meetings.filter(m => m.person_id == personId);
+
+  const el = document.getElementById('meeting-detail-panel');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${person.name}</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${person.role || ''}${person.cadence ? ` · ${person.cadence}` : ''}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openMeetingModalForPerson('${personId}', '${person.name}')">+ Log Meeting</button>
+      </div>
+      <div class="card-body">
+        ${personMeetings.length === 0 ?
+          `<div class="empty-state"><div class="empty-state-icon">◷</div><div class="empty-state-text">No meetings logged yet</div></div>` :
+          personMeetings.map(m => `
+            <div class="meeting-entry">
+              <div class="meeting-date">${new Date(m.meeting_date).toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'})}</div>
+              <div class="meeting-title">${m.title}</div>
+              ${m.notes ? `<div class="meeting-notes">${m.notes}</div>` : ''}
+              ${m.action_items ? `<div style="margin-top:8px;padding:10px 12px;background:var(--cream);border-radius:2px;font-size:12px;"><strong style="color:var(--navy);">Action Items:</strong><div style="color:var(--text-mid);margin-top:4px;">${m.action_items}</div></div>` : ''}
+              ${m.next_meeting ? `<div style="margin-top:6px;font-size:11px;color:var(--navy-light);font-weight:600;">Next: ${new Date(m.next_meeting).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>` : ''}
+            </div>`).join('')
+        }
+      </div>
+    </div>`;
+}
+
+function openMeetingModal() { openModal('modal-meeting'); }
+function openMeetingModalForPerson(personId, personName) {
+  document.getElementById('meeting-person').value = personName;
+  document.getElementById('meeting-person').dataset.personId = personId;
+  openModal('modal-meeting');
+}
+
+async function savePerson() {
+  const data = {
+    name: document.getElementById('person-name').value,
+    role: document.getElementById('person-role').value,
+    cadence: document.getElementById('person-cadence').value
+  };
+  if (!data.name) { showToast('Please enter a name'); return; }
+  await dbInsert('meeting_people', data);
+  closeModal('modal-add-person');
+  await loadMeetingPeople();
+  showToast('Person added');
+}
+
+async function saveMeeting() {
+  const personId = document.getElementById('meeting-person').dataset.personId;
+  const data = {
+    person_id: personId || null,
+    person: document.getElementById('meeting-person').value,
+    meeting_date: document.getElementById('meeting-date').value,
+    title: document.getElementById('meeting-title').value,
+    notes: document.getElementById('meeting-notes').value,
+    action_items: document.getElementById('meeting-actions').value,
+    next_meeting: document.getElementById('meeting-next').value || null,
+    cadence: document.getElementById('meeting-cadence').value
+  };
+  if (!data.person || !data.meeting_date) { showToast('Please fill in person and date'); return; }
+  await dbInsert('meetings', data);
+  closeModal('modal-meeting');
+  if (currentMeetingPerson) await selectMeetingPerson(currentMeetingPerson);
+  await loadDashboard();
+  showToast('Meeting logged');
+}
+
+function openAddPersonModal() { openModal('modal-add-person'); }
+
+// RECRUITING
+async function loadCandidates() {
+  const candidates = await dbQuery('candidates', { order: 'created_at', asc: false });
+  const filtered = pipelineFilter === 'all' ? candidates : candidates.filter(c => c.stage === pipelineFilter);
+  const el = document.getElementById('candidates-list');
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">◈</div><div class="empty-state-text">No candidates in this stage</div></div>`;
+    return;
+  }
+
+  const stageColors = { 'Sourced': '#e2e8f0', 'In Contact': '#fef3c7', 'Interviewing': '#dbeafe', 'Offer': '#fde68a', 'Hired': '#dcfce7', 'Not Proceeding': '#fee2e2' };
+  const stageText = { 'Sourced': '#475569', 'In Contact': '#92400e', 'Interviewing': '#1e40af', 'Offer': '#78350f', 'Hired': '#166534', 'Not Proceeding': '#991b1b' };
+
+  el.innerHTML = `<table class="data-table" style="background:var(--white);border:1px solid var(--border);box-shadow:var(--shadow);">
+    <thead><tr>
+      <th>Name</th><th>Target Role</th><th>Source</th><th>Stage</th><th>Last Contact</th><th>Notes</th><th></th>
+    </tr></thead>
+    <tbody>
+      ${filtered.map(c => `<tr>
+        <td><strong>${c.name}</strong>${c.linkedin ? `<br><a href="${c.linkedin}" target="_blank" style="font-size:11px;color:var(--navy-light);">LinkedIn ↗</a>` : ''}</td>
+        <td style="font-size:13px;color:var(--text-mid);">${c.target_role || '—'}</td>
+        <td><span class="tag">${c.source || '—'}</span></td>
+        <td><span style="display:inline-block;padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:0.5px;background:${stageColors[c.stage]||'#f1f5f9'};color:${stageText[c.stage]||'#475569'};">${c.stage}</span></td>
+        <td style="font-size:12px;color:var(--text-light);font-family:'DM Mono',monospace;">${c.last_contact ? new Date(c.last_contact).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—'}</td>
+        <td style="font-size:12px;color:var(--text-mid);max-width:200px;">${c.notes || '—'}</td>
+        <td><button class="btn btn-sm btn-outline" onclick="deleteCandidate('${c.id}')">×</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function filterPipeline(stage) {
+  pipelineFilter = stage;
+  document.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  loadCandidates();
+}
+
+function openCandidateModal() { openModal('modal-candidate'); }
+
+async function saveCandidate() {
+  const data = {
+    name: document.getElementById('cand-name').value,
+    target_role: document.getElementById('cand-role').value,
+    source: document.getElementById('cand-source').value,
+    stage: document.getElementById('cand-stage').value,
+    last_contact: document.getElementById('cand-last').value || null,
+    linkedin: document.getElementById('cand-linkedin').value,
+    notes: document.getElementById('cand-notes').value
+  };
+  if (!data.name) { showToast('Please enter a name'); return; }
+  await dbInsert('candidates', data);
+  closeModal('modal-candidate');
+  await loadCandidates();
+  await loadDashboard();
+  showToast('Candidate added');
+}
+
+async function deleteCandidate(id) {
+  if (!confirm('Remove this candidate?')) return;
+  await dbDelete('candidates', id);
+  await loadCandidates();
+  showToast('Candidate removed');
+}
+
+// AUDIT PLAN
+async function loadAuditPlan() {
+  const items = await dbQuery('audit_plan', { order: 'created_at' });
+
+  const statsByStatus = {};
+  items.forEach(i => { statsByStatus[i.status] = (statsByStatus[i.status] || 0) + 1; });
+
+  document.getElementById('audit-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${items.length}</div></div>
+    <div class="stat-card"><div class="stat-label">In Progress</div><div class="stat-value">${statsByStatus['In Progress'] || 0}</div></div>
+    <div class="stat-card"><div class="stat-label">Complete</div><div class="stat-value">${statsByStatus['Complete'] || 0}</div></div>`;
+
+  const statusColors = { 'Planned': '#f1f5f9', 'In Progress': '#fef3c7', 'Fieldwork Complete': '#dbeafe', 'Report Issued': '#fde68a', 'Complete': '#dcfce7' };
+  const statusText = { 'Planned': '#475569', 'In Progress': '#92400e', 'Fieldwork Complete': '#1e40af', 'Report Issued': '#78350f', 'Complete': '#166534' };
+
+  document.getElementById('audit-table-body').innerHTML = items.length === 0 ?
+    `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-light);">No audit plan items yet</td></tr>` :
+    items.map(i => `<tr>
+      <td><strong style="font-size:14px;">${i.area}</strong></td>
+      <td><span class="tag">${i.type}</span></td>
+      <td style="font-size:13px;">${i.owner || '—'}</td>
+      <td style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-light);">${i.target_date ? new Date(i.target_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+      <td><span style="display:inline-block;padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;background:${statusColors[i.status]||'#f1f5f9'};color:${statusText[i.status]||'#475569'};">${i.status}</span></td>
+      <td style="font-size:12px;color:var(--text-mid);max-width:180px;">${i.notes || '—'}</td>
+      <td><button class="btn btn-sm" style="background:none;border:none;color:var(--border);cursor:pointer;font-size:16px;" onclick="deleteAuditItem('${i.id}')" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--border)'">×</button></td>
+    </tr>`).join('');
+}
+
+function openAuditItemModal() { openModal('modal-audit'); }
+
+async function saveAuditItem() {
+  const data = {
+    area: document.getElementById('audit-area').value,
+    type: document.getElementById('audit-type').value,
+    owner: document.getElementById('audit-owner').value,
+    target_date: document.getElementById('audit-date').value || null,
+    status: document.getElementById('audit-status').value,
+    notes: document.getElementById('audit-notes').value
+  };
+  if (!data.area) { showToast('Please enter an area'); return; }
+  await dbInsert('audit_plan', data);
+  closeModal('modal-audit');
+  await loadAuditPlan();
+  showToast('Audit item added');
+}
+
+async function deleteAuditItem(id) {
+  if (!confirm('Remove this item?')) return;
+  await dbDelete('audit_plan', id);
+  await loadAuditPlan();
+  showToast('Item removed');
+}
+
+// AC MEETINGS
+async function loadACMeetings() {
+  const meetings = await dbQuery('ac_meetings', { order: 'meeting_date', asc: false });
+  const el = document.getElementById('ac-meetings-list');
+
+  if (meetings.length === 0) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--text-light);padding:8px 0;">No meetings yet</div>`;
+    return;
+  }
+
+  el.innerHTML = meetings.map(m => `
+    <div onclick="selectACMeeting('${m.id}')" style="padding:10px 8px;cursor:pointer;border-radius:2px;transition:background 0.15s;font-size:14px;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='${currentACMeeting === m.id ? 'var(--cream)' : 'transparent'}'">
+      <div style="font-weight:600;color:var(--navy);">${m.title || m.quarter}</div>
+      <div style="font-size:11px;color:var(--text-light);">${m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : m.quarter}</div>
+    </div>`).join('');
+}
+
+async function selectACMeeting(id) {
+  currentACMeeting = id;
+  await loadACMeetings();
+  const meetings = await dbQuery('ac_meetings');
+  const m = meetings.find(m => m.id == id);
+  if (!m) return;
+
+  document.getElementById('ac-meeting-detail').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${m.title || m.quarter}</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:2px;">${m.meeting_date ? new Date(m.meeting_date).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : m.quarter}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteACMeeting('${m.id}')">Delete</button>
+      </div>
+      <div class="card-body">
+        ${m.agenda ? `<div style="margin-bottom:20px;"><div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;">Agenda</div><div style="font-size:14px;line-height:1.7;white-space:pre-wrap;">${m.agenda}</div></div>` : ''}
+        ${m.materials_status ? `<div style="margin-bottom:20px;padding:16px;background:var(--cream);border-radius:2px;"><div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;">Materials Status</div><div style="font-size:14px;line-height:1.7;white-space:pre-wrap;">${m.materials_status}</div></div>` : ''}
+        ${m.open_items ? `<div style="padding:16px;background:#fef3c7;border-radius:2px;border:1px solid #fde68a;"><div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#92400e;margin-bottom:8px;">Open Items</div><div style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#92400e;">${m.open_items}</div></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function openACMeetingModal() { openModal('modal-ac-meeting'); }
+
+async function saveACMeeting() {
+  const data = {
+    meeting_date: document.getElementById('ac-date').value || null,
+    quarter: document.getElementById('ac-quarter').value,
+    title: document.getElementById('ac-title').value,
+    agenda: document.getElementById('ac-agenda').value,
+    materials_status: document.getElementById('ac-materials').value,
+    open_items: document.getElementById('ac-open').value
+  };
+  await dbInsert('ac_meetings', data);
+  closeModal('modal-ac-meeting');
+  await loadACMeetings();
+  await loadDashboard();
+  showToast('AC Meeting saved');
+}
+
+async function deleteACMeeting(id) {
+  if (!confirm('Delete this meeting?')) return;
+  await dbDelete('ac_meetings', id);
+  currentACMeeting = null;
+  document.getElementById('ac-meeting-detail').innerHTML = `<div class="empty-state" style="padding:80px 20px;"><div class="empty-state-icon">◬</div><div class="empty-state-text">Select a meeting to view prep details</div></div>`;
+  await loadACMeetings();
+  showToast('Meeting deleted');
+}
+
+// MODAL HELPERS
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toast-msg');
+  const u = document.getElementById('toast-undo');
+  m.textContent = msg;
+  u.style.display = 'none';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function showToastWithUndo(msg) {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toast-msg');
+  const u = document.getElementById('toast-undo');
+  m.textContent = msg;
+  u.style.display = 'inline-block';
+  t.classList.add('show');
+  setTimeout(() => {
+    t.classList.remove('show');
+    u.style.display = 'none';
+  }, 5000);
+}
+
+function hideToast() {
+  const t = document.getElementById('toast');
+  t.classList.remove('show');
+  document.getElementById('toast-undo').style.display = 'none';
+}
+
+// CHECK SESSION ON LOAD
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    initApp(session.user);
+  }
+});
+</script>
+
+<!-- SETUP INSTRUCTIONS (shown if DB not set up) -->
+<div id="setup-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:white;padding:12px 20px;font-size:13px;z-index:9999;font-family:'DM Mono',monospace;">
+  ⚠️ Run SQL setup in Supabase dashboard to enable data persistence.
+  <button onclick="document.getElementById('setup-banner').style.display='none'" style="margin-left:16px;background:none;border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 10px;cursor:pointer;border-radius:2px;">Dismiss</button>
+</div>
+
+</body>
+</html>
